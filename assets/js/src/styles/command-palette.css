@@ -1,0 +1,605 @@
+/* AI Command Palette Styles */
+
+.aicp-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10vh;
+}
+
+/* --- Modal Container --- */
+.aicp-modal {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+    max-width: 680px;
+    width: 96vw;
+    max-height: 80vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow 0.2s, border-radius 0.2s;
+}
+
+.aicp-modal .components-modal__header {
+    display: none;
+}
+
+.aicp-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* --- Search Bar --- */
+.aicp-search {
+    position: relative;
+    padding: 24px 24px 12px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+.aicp-input {
+    position: relative;
+}
+.aicp-input input {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 14px 44px 14px 18px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    transition: border 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.aicp-input input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px #2563eb22;
+}
+.aicp-input .aicp-search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.aicp-loading {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aicp-ai-status {
+    font-size: 12px;
+    color: #666;
+}
+
+.aicp-error {
+    padding: 12px 16px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 14px;
+    border-bottom: 1px solid #fecaca;
+}
+
+/* --- Command List --- */
+.aicp-command-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 24px 0 24px;
+    max-height: 38vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.aicp-command-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    border: 1.5px solid transparent;
+    transition: background 0.15s, border 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+.aicp-command-item:hover, .aicp-command-item:focus {
+    background: #e0e7ef;
+    border-color: #2563eb44;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+    outline: none;
+}
+.aicp-command-item .dashicons {
+    font-size: 1.3rem;
+    color: #64748b;
+    flex-shrink: 0;
+}
+.aicp-command-title {
+    font-size: 1.08rem;
+    font-weight: 500;
+    color: #1e293b;
+    margin-right: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.aicp-command-category {
+    font-size: 0.85rem;
+    color: #64748b;
+    background: #e0e7ef;
+    padding: 2px 10px;
+    border-radius: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.aicp-no-results {
+    text-align: center;
+    color: #64748b;
+    font-size: 1rem;
+    padding: 32px 0;
+}
+
+/* --- Footer --- */
+.aicp-footer {
+    position: sticky;
+    bottom: 0;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+    padding: 14px 24px;
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    z-index: 2;
+}
+.aicp-hint {
+    font-size: 0.98rem;
+    color: #64748b;
+    background: #e0e7ef;
+    border-radius: 999px;
+    padding: 4px 16px;
+    margin: 0 2px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+/* --- Transitions --- */
+.aicp-modal, .aicp-command-item, .aicp-input input {
+    transition: all 0.18s cubic-bezier(.4,0,.2,1);
+}
+
+/* --- Section Dividers --- */
+.aicp-section-divider {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 18px 0;
+}
+
+/* --- Modal Header/Section Titles --- */
+.aicp-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    padding: 0 24px;
+    color: #1e293b;
+    letter-spacing: -0.01em;
+}
+.aicp-divider {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 12px 0;
+}
+
+/* --- Modal Header & Section Title Alignment --- */
+.aicp-modal-header {
+  padding: 0 24px 0 24px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.aicp-modal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 28px;
+}
+.aicp-modal-title {
+  padding-left: 0;
+}
+.aicp-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  padding: 0;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
+/* --- Settings Modal Card --- */
+.aicp-settings-card {
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  gap: 0;
+}
+
+/* --- Settings Section Consistency --- */
+.aicp-settings-section {
+  background: #f8fafc;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  padding: 18px 18px 12px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aicp-settings-section .aicp-section-title {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+/* --- Modal Content Padding Consistency --- */
+.aicp-modal .aicp-settings-section:first-child {
+  margin-top: 28px;
+}
+.aicp-modal .aicp-settings-section:last-child {
+  margin-bottom: 28px;
+}
+
+@media (max-width: 640px) {
+  .aicp-settings-section {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* --- Modal Header & Subtitle --- */
+.aicp-modal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.aicp-subtitle {
+  font-size: 1.04rem;
+  color: #64748b;
+  margin-top: 2px;
+  margin-bottom: 0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* --- Settings Icon Button --- */
+.aicp-settings-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  margin-left: 8px;
+  position: relative;
+}
+.aicp-settings-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.aicp-settings-btn:hover, .aicp-settings-btn:focus {
+  background: #e0e7ef;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+  outline: none;
+}
+.aicp-settings-btn .dashicons {
+  font-size: 1.3rem;
+  color: #64748b;
+}
+
+/* --- Contextual Suggestions --- */
+.aicp-contextual-suggestions {
+  padding: 0 24px;
+  margin-top: 10px;
+}
+.aicp-contextual-suggestions .aicp-section-title {
+  padding: 0;
+}
+.aicp-suggestion-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: #f8fafc;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  position: relative;
+}
+.aicp-suggestion-btn:hover, .aicp-suggestion-btn:focus {
+  background: #e0e7ef;
+  border-color: #2563eb44;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+  outline: none;
+}
+.aicp-suggestion-btn .font-medium {
+  font-size: 1.08rem;
+  color: #1e293b;
+}
+.aicp-suggestion-btn .text-xs {
+  font-size: 0.92rem;
+  color: #64748b;
+}
+.aicp-suggestion-btn .text-gray-400 {
+  color: #94a3b8;
+}
+
+/* --- More whitespace for modal sections --- */
+.aicp-section-title {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.aicp-section-divider {
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+/* --- Responsive tweaks for new header --- */
+@media (max-width: 640px) {
+  .aicp-modal-header {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .aicp-contextual-suggestions {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* WordPress Admin Specific Styles */
+.wp-admin .aicp-modal {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* Dark Mode Support (if admin color scheme is dark) */
+body.admin-color-midnight .aicp-modal,
+body.admin-color-ocean .aicp-modal,
+body.admin-color-nightfall .aicp-modal {
+    background: #1e1e1e;
+    color: #e0e0e0;
+}
+
+body.admin-color-midnight .aicp-input input,
+body.admin-color-ocean .aicp-input input,
+body.admin-color-nightfall .aicp-input input {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.admin-color-midnight .aicp-command:hover,
+body.admin-color-ocean .aicp-command:hover,
+body.admin-color-nightfall .aicp-command:hover {
+    background: #2a2a2a;
+}
+
+body.admin-color-midnight .aicp-command--selected,
+body.admin-color-ocean .aicp-command--selected,
+body.admin-color-nightfall .aicp-command--selected {
+    background: #0073aa20;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .aicp-modal {
+        width: 99vw;
+        max-height: 95vh;
+        border-radius: 10px;
+    }
+    .aicp-search, .aicp-footer {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .aicp-command-list {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* --- Full Schema Form Card --- */
+.aicp-fullschema-form-card {
+  background: #f8fafc;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  padding: 28px 28px 20px 28px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aicp-fullschema-desc {
+  color: #64748b;
+  font-size: 1.01rem;
+  margin-bottom: 8px;
+}
+
+/* --- Workflow UI Card --- */
+.aicp-workflow-ui-card {
+  background: #f8fafc;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  padding: 28px 28px 20px 28px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --- Workflow Stepper --- */
+.aicp-workflow-step-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 5px solid #e5e7eb;
+  position: relative;
+  transition: border-color 0.18s;
+}
+.aicp-workflow-step--pending {
+  border-left-color: #e5e7eb;
+}
+.aicp-workflow-step--running {
+  border-left-color: #2563eb;
+}
+.aicp-workflow-step--success {
+  border-left-color: #22c55e;
+}
+.aicp-workflow-step--error {
+  border-left-color: #dc2626;
+}
+.aicp-workflow-step--rolled-back {
+  border-left-style: dashed;
+}
+.aicp-workflow-step-index {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+.aicp-workflow-step-title {
+  font-size: 1.08rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+.aicp-workflow-step-desc pre {
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.98rem;
+  color: #334155;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.aicp-workflow-step-status {
+  font-size: 0.97rem;
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .aicp-fullschema-form-card, .aicp-workflow-ui-card {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* --- Beautiful, Consistent Buttons --- */
+.aicp-btn, .aicp-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.11rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 13px 28px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s, color 0.18s, transform 0.14s;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.06);
+  outline: none;
+  min-width: 120px;
+  min-height: 46px;
+  letter-spacing: 0.01em;
+}
+.aicp-btn {
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 12px rgba(37,99,235,0.10);
+}
+.aicp-btn:hover, .aicp-btn:focus {
+  background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 100%);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(37,99,235,0.13);
+  transform: scale(1.045);
+}
+.aicp-btn:active {
+  background: #2563eb;
+  color: #fff;
+}
+.aicp-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.aicp-btn-secondary {
+  background: #fff;
+  color: #2563eb;
+  border: 1.5px solid #c7d2fe;
+  box-shadow: 0 1px 4px rgba(37,99,235,0.04);
+}
+.aicp-btn-secondary:hover, .aicp-btn-secondary:focus {
+  background: #f1f5f9;
+  color: #1d4ed8;
+  border-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+  transform: scale(1.035);
+}
+.aicp-btn-secondary:active {
+  background: #e0e7ef;
+  color: #2563eb;
+}
+.aicp-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.aicp-btn-group {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* --- Spinning animation for dashicon spinner --- */
+.aicp-spin {
+  animation: aicp-spin 1s linear infinite;
+}
+@keyframes aicp-spin {
+  0% { transform: rotate(0deg) ; }
+  100% { transform: rotate(360deg); }
+}
+span.aicp-search-icon.dashicons.dashicons-update.aicp-spin {
+  top:-12px
+}

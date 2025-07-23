@@ -1,0 +1,1 @@
+add_action('rest_api_init', ['AICP\AI\AI_Service', 'register_rest_routes']);

@@ -1,0 +1,55 @@
+{
+  "name": "ai-command-palette",
+  "version": "1.0.0",
+  "description": "AI-powered command palette for WordPress",
+  "main": "index.js",
+	"scripts": {
+		"build": "wp-scripts build",
+		"check-engines": "wp-scripts check-engines",
+		"check-licenses": "wp-scripts check-licenses",
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"lint:md:docs": "wp-scripts lint-md-docs",
+		"lint:pkg-json": "wp-scripts lint-pkg-json",
+		"packages-update": "wp-scripts packages-update",
+		"plugin-zip": "wp-scripts plugin-zip",
+		"start": "wp-scripts start",
+		"test:e2e": "wp-scripts test-e2e",
+		"test:unit": "wp-scripts test-unit-js"
+	},
+  "keywords": [
+    "wordpress",
+    "command-palette",
+    "ai"
+  ],
+  "author": "",
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@babel/preset-react": "^7.22.0",
+    "@babel/preset-typescript": "^7.23.0",
+    "@types/lodash": "^4.17.20",
+    "@types/wordpress__components": "^23.0.12",
+    "@types/wordpress__i18n": "^3.4.0",
+    "@wordpress/scripts": "^30.19.0",
+    "babel-loader": "^9.1.0",
+    "css-loader": "^6.11.0",
+    "style-loader": "^3.3.4",
+    "typescript": "^5.2.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.0"
+  },
+  "dependencies": {
+    "@wordpress/api-fetch": "^6.44.0",
+    "@wordpress/components": "^25.13.0",
+    "@wordpress/element": "^5.24.0",
+    "@wordpress/i18n": "^4.47.0",
+    "chart.js": "^4.5.0",
+    "classnames": "^2.3.0",
+    "fuse.js": "^7.0.0",
+    "lodash": "^4.17.21",
+    "react-chartjs-2": "^5.3.0"
+  }
+}
