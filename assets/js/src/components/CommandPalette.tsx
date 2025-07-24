@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Modal, TextControl, Spinner, Button, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { debounce } from 'lodash';
+import { debounce, DebouncedFunc } from 'lodash';
 import classNames from 'classnames';
 import Fuse from 'fuse.js';
 import CommandList from './CommandList'; // FIX: use default import
@@ -34,8 +34,9 @@ declare global {
     }
 }
 
-export const CommandPalette: React.FC = () => {
-    console.log('[AICP] CommandPalette component rendered');
+// Remove React.FC and just use a plain function
+function CommandPalette() {
+    console.log('[AICP] CommandPalette component rendered', { time: Date.now() });
 
     // --- LOGGING: Mount ---
     useEffect(() => {
@@ -68,7 +69,7 @@ export const CommandPalette: React.FC = () => {
     const [contextualSuggestions, setContextualSuggestions] = useState<any[]>([]);
     const [contextualLoading, setContextualLoading] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [shortcut, setShortcut] = useState<string>(() => {
+    const [shortcut, setShortcut] = useState(() => {
         return localStorage.getItem('aicp_palette_shortcut') || (window.aicpData?.settings?.keyboard_shortcut || 'cmd+k,ctrl+k');
     });
     const [shortcutInput, setShortcutInput] = useState(shortcut);
@@ -81,7 +82,26 @@ export const CommandPalette: React.FC = () => {
         return stored ? JSON.parse(stored) : { preferClientSide: true };
     });
     const [conversationHistory, setConversationHistory] = useState<any[]>([]);
+    const conversationHistoryRef = useRef(conversationHistory);
+    useEffect(() => {
+        conversationHistoryRef.current = conversationHistory;
+    }, [conversationHistory]);
+
+    const commandsRef = useRef(commands);
+    useEffect(() => {
+        commandsRef.current = commands;
+    }, [commands]);
+
+    const aiPreferencesRef = useRef(aiPreferences);
+    useEffect(() => {
+        aiPreferencesRef.current = aiPreferences;
+    }, [aiPreferences]);
+
     const [voiceMode, setVoiceMode] = useState(false);
+
+    // We'll store handleSearch in a ref so voice commands can use it
+    const handleSearchRef = useRef<((query: string) => void) | null>(null);
+
     const {
       isListening,
       transcript,
@@ -93,8 +113,8 @@ export const CommandPalette: React.FC = () => {
       reset: resetVoice,
       isProcessing: voiceProcessing
     } = useVoiceCommands((command) => {
-      setQuery(command);
-      handleSearch(command);
+      setQuery(command); // update input value
+      handleSearchRef.current?.(command); // trigger the same debounced search
       setVoiceMode(false);
     });
 
@@ -134,13 +154,13 @@ export const CommandPalette: React.FC = () => {
     }, [isOpen]);
 
     // Load contextual suggestions using AI abstraction
-    const loadContextualSuggestions = async () => {
+    const loadContextualSuggestions = useCallback(async () => {
         if (!window.aicpData?.context) return;
 
         setContextualLoading(true);
         try {
             const aiAbstraction = AIAbstraction.getInstance();
-            aiAbstraction.updatePreferences(aiPreferences);
+            aiAbstraction.updatePreferences(aiPreferencesRef.current);
 
             const response = await aiAbstraction.process({
                 type: 'suggestions',
@@ -148,7 +168,7 @@ export const CommandPalette: React.FC = () => {
                     ...(window.aicpData?.context || {}),
                     isAdmin: window.aicpData?.context?.isAdmin,
                     currentUser: window.aicpData?.currentUser || null,
-                    conversation_history: conversationHistory,
+                    conversation_history: conversationHistoryRef.current,
                 }
             });
 
@@ -172,7 +192,7 @@ export const CommandPalette: React.FC = () => {
         } finally {
             setContextualLoading(false);
         }
-    };
+    }, []);
 
     // Helper to normalize shortcut input
     const normalizeShortcut = (input: string) => {
@@ -256,21 +276,21 @@ export const CommandPalette: React.FC = () => {
     }, []);
 
     // AI-assisted search handler using unified abstraction layer
-    const handleSearch = useCallback(
-        debounce(async (searchQuery: string) => {
+    // Refactor debounced search to useRef
+    const debouncedSearchRef = useRef<DebouncedFunc<(searchQuery: string) => void> | null>(null);
+    useEffect(() => {
+        debouncedSearchRef.current = debounce(async (searchQuery: string) => {
+            console.log('[AICP] debouncedSearch called', { searchQuery });
             if (!searchQuery) {
                 setCommands(window.aicpData?.staticCommands || []);
                 setAiLoading(false);
                 setSelectedCommand(null);
                 return;
             }
-
             setLoading(true);
             setError(null);
             setSelectedCommand(null);
-
             try {
-                // Local fuzzy search
                 const fuse = new Fuse([
                     ...(window.aicpData?.staticCommands || []),
                     ...dynamicCommands,
@@ -279,20 +299,13 @@ export const CommandPalette: React.FC = () => {
                     threshold: 0.4
                 });
                 const localResults = fuse.search(searchQuery).map(result => result.item);
-
-                // Use unified AI abstraction layer
                 const aiAbstraction = AIAbstraction.getInstance();
                 let aiSelected = false;
                 let aiSource = 'none';
-
-                // Only use AI for natural language queries
                 if (searchQuery.split(' ').length > 2 && searchQuery.length > 10) {
                     setAiLoading(true);
                     try {
-                        // Update AI preferences if they've changed
-                        aiAbstraction.updatePreferences(aiPreferences);
-
-                        // Try intent classification first
+                        aiAbstraction.updatePreferences(aiPreferencesRef.current);
                         const intentResponse = await aiAbstraction.process({
                             type: 'intent_classification',
                             query: searchQuery,
@@ -300,11 +313,9 @@ export const CommandPalette: React.FC = () => {
                                 ...(window.aicpData?.context || {}),
                                 isAdmin: window.aicpData?.context?.isAdmin,
                                 currentUser: window.aicpData?.currentUser || null,
-                                conversation_history: conversationHistory,
+                                conversation_history: conversationHistoryRef.current,
                             }
                         });
-
-                        // Save to conversation history
                         if (intentResponse.success) {
                             setConversationHistory(prev => [
                                 ...prev,
@@ -315,17 +326,13 @@ export const CommandPalette: React.FC = () => {
                                 }
                             ]);
                         }
-
-                        // In handleSearch, after intent classification, try workflow planning for all queries (not just complex ones)
                         if (intentResponse.success) {
                             aiSource = intentResponse.source;
                             const intent = intentResponse.data;
-                            // Try to find a command whose category or id matches the intent
-                            const match = commands.find(cmd =>
+                            const match = commandsRef.current.find((cmd: any) =>
                                 (cmd.category && cmd.category.toLowerCase() === intent.toLowerCase()) ||
                                 (cmd.id && cmd.id.toLowerCase() === intent.toLowerCase())
                             );
-                            // Always try to get a workflow plan from the backend for any query
                             try {
                                 const workflowResponse = await apiFetch({
                                     path: '/ai-command-palette/v1/ai-process',
@@ -337,7 +344,7 @@ export const CommandPalette: React.FC = () => {
                                             ...(window.aicpData?.context || {}),
                                             isAdmin: window.aicpData?.context?.isAdmin,
                                             currentUser: window.aicpData?.currentUser || null,
-                                            conversation_history: conversationHistory,
+                                            conversation_history: conversationHistoryRef.current,
                                         },
                                     },
                                 });
@@ -353,7 +360,6 @@ export const CommandPalette: React.FC = () => {
                                     Array.isArray(workflowResponse.data.steps) &&
                                     workflowResponse.data.steps.length > 0
                                 ) {
-                                    // Save workflow plan to conversation history
                                     setConversationHistory(prev => [
                                         ...prev,
                                         {
@@ -362,7 +368,6 @@ export const CommandPalette: React.FC = () => {
                                             timestamp: Date.now(),
                                         }
                                     ]);
-                                    // If a full schema is embedded, use it for the form
                                     if (
                                         workflowResponse.data &&
                                         typeof workflowResponse.data === 'object' &&
@@ -372,8 +377,6 @@ export const CommandPalette: React.FC = () => {
                                         const initialArgs = workflowResponse.data.steps[0].arguments || {};
                                         setParamValues(initialArgs);
                                     }
-
-                                    // Show the workflow UI
                                     setSelectedCommand({
                                         id: 'ai-workflow',
                                         title: __('AI Workflow Plan', 'ai-command-palette'),
@@ -386,7 +389,6 @@ export const CommandPalette: React.FC = () => {
                                     });
                                     aiSelected = true;
                                 } else {
-                                    // AI didn't return a valid workflow plan
                                     console.log('AI workflow planning returned no valid plan:', workflowResponse);
                                     setError(__('AI couldn\'t create a workflow for your request. Try a more specific command or use the search results below.', 'ai-command-palette'));
                                 }
@@ -399,7 +401,6 @@ export const CommandPalette: React.FC = () => {
                                     setSelectedCommand(match);
                                     aiSelected = true;
                                 } else {
-                                    // If no actionable command, show intent as a dummy command
                                     const intentCommand = {
                                         id: 'ai-intent',
                                         title: `${__('AI Intent:', 'ai-command-palette')} ${intent}`,
@@ -419,9 +420,7 @@ export const CommandPalette: React.FC = () => {
                         setAiLoading(false);
                     }
                 }
-
                 if (!aiSelected) {
-                    // Fallback: show search results
                     setCommands(localResults);
                     if (aiSource === 'fallback' && searchQuery.split(' ').length > 2) {
                         setError(__('AI unavailable - showing best matches', 'ai-command-palette'));
@@ -432,9 +431,19 @@ export const CommandPalette: React.FC = () => {
             } finally {
                 setLoading(false);
             }
-        }, 1000), // <-- updated debounce delay to 1000ms
-        [dynamicCommands, aiPreferences, conversationHistory]
-    );
+        }, 1000);
+    }, [dynamicCommands, aiPreferences]);
+    // Stable handleSearch function
+    const handleSearch = useCallback((searchQuery: string) => {
+        if (debouncedSearchRef.current) {
+            debouncedSearchRef.current(searchQuery);
+        }
+    }, []);
+
+    // Store handleSearch in ref for voice commands
+    useEffect(() => {
+        handleSearchRef.current = handleSearch;
+    }, [handleSearch]);
 
     // Handle query change
     const handleQueryChange = (value: string) => {
@@ -444,17 +453,17 @@ export const CommandPalette: React.FC = () => {
     };
 
     // Enhanced keyboard navigation with focus trap
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
-                setSelectedIndex(prev =>
+                setSelectedIndex((prev: number) =>
                     prev < commands.length - 1 ? prev + 1 : prev
                 );
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                setSelectedIndex(prev => prev > 0 ? prev - 1 : 0);
+                setSelectedIndex((prev: number) => prev > 0 ? prev - 1 : 0);
                 break;
             case 'Enter':
                 e.preventDefault();
@@ -660,7 +669,7 @@ export const CommandPalette: React.FC = () => {
 
     // Handle parameter input change
     const handleParamChange = (name: string, value: any) => {
-        setParamValues(prev => ({ ...prev, [name]: value }));
+        setParamValues((prev: Record<string, any>) => ({ ...prev, [name]: value }));
     };
 
     // Handle dynamic command execution
@@ -763,7 +772,7 @@ export const CommandPalette: React.FC = () => {
     // Workflow stepper UI
     const renderWorkflowStepper = () => (
         <div className="aicp-workflow-stepper mb-4">
-            {workflowSteps.map((step, i) => (
+            {workflowSteps.map((step: any, i: number) => (
                 <div key={i} className={classNames('aicp-workflow-step', {
                     'aicp-workflow-step--pending': step.status === 'pending',
                     'aicp-workflow-step--running': step.status === 'running',
@@ -774,7 +783,7 @@ export const CommandPalette: React.FC = () => {
                     <div className="aicp-workflow-step-index">{i + 1}</div>
                     <div className="aicp-workflow-step-title font-bold">{step.function}</div>
                     <div className="aicp-workflow-step-desc text-xs text-gray-500">
-                        {Object.entries(step.arguments || {}).map(([k, v]) => (
+                        {Object.entries(step.arguments || {}).map(([k, v]: [string, any]) => (
                             <div key={k}>
                                 <span className="font-semibold">{k}:</span> {typeof v === 'object' && v !== null && 'raw' in v ? (v as any).raw : (typeof v === 'object' && v !== null ? <pre style={{display:'inline'}}>{JSON.stringify(v, null, 2)}</pre> : String(v))}
                             </div>
@@ -1202,7 +1211,7 @@ export const CommandPalette: React.FC = () => {
                 >
                     {/* Recommended/Contextual Suggestions */}
                     {/* Only show 'Recommended for you' if there are actionable suggestions */}
-                    {contextualSuggestions.length > 0 && !query && !selectedCommand && contextualSuggestions.some(s => getCommandById(s.id)) && (
+                    {contextualSuggestions.length > 0 && !query && !selectedCommand && contextualSuggestions.some((s: any) => getCommandById(s.id)) && (
                         <div className="aicp-contextual-suggestions mb-4">
                             <div className="aicp-section-title font-semibold mb-1" id="suggestions-heading">
                                 {__('Recommended for you', 'ai-command-palette')}
@@ -1218,7 +1227,7 @@ export const CommandPalette: React.FC = () => {
                                     role="listbox"
                                     aria-labelledby="suggestions-heading"
                                 >
-                                    {contextualSuggestions.map((suggestion, index) => {
+                                    {contextualSuggestions.map((suggestion: any, index: number) => {
                                         const cmd = getCommandById(suggestion.id);
                                         if (!cmd) return null;
                                         return (
@@ -1252,7 +1261,21 @@ export const CommandPalette: React.FC = () => {
                                 className="aicp-input-field"
                                 aria-label={__('Search commands', 'ai-command-palette')}
                                 aria-describedby="search-help"
+                                style={{
+                                    paddingRight: 95,
+                                }}
                             />
+                            {/* Search icon/spinner */}
+                            <span className="aicp-search-icon-wrapper" style={{ position: 'absolute', right: 48, top: '50%', transform: 'translateY(-50%)' }}>
+                                <span
+                                    className={classNames('aicp-search-icon dashicons', {
+                                        'dashicons-search': !(loading || aiLoading),
+                                        'dashicons-update': (loading || aiLoading),
+                                        'aicp-spin': (loading || aiLoading),
+                                    })}
+                                    aria-hidden="true"
+                                ></span>
+                            </span>
                             {/* Voice input button */}
                             <button
                                 type="button"
@@ -1270,7 +1293,7 @@ export const CommandPalette: React.FC = () => {
                                 disabled={!voiceSupported || voiceProcessing}
                                 style={{
                                     position: 'absolute',
-                                    right: 48,
+                                    right: 16,
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     background: 'none',
@@ -1407,7 +1430,7 @@ export const CommandPalette: React.FC = () => {
                                         }}
                                         aria-labelledby="dynamic-form-heading"
                                     >
-                                        {Object.entries(selectedCommand.action.parameters).filter(([name]) => !paramValues[name]).map(([name, info]: any) => (
+                                        {Object.entries(selectedCommand.action.parameters).filter(([name]: [string, any]) => !paramValues[name]).map(([name, info]: [string, any]) => (
                                             <div key={name} className="mb-2">
                                                 <label
                                                     className="block text-sm font-medium mb-1"
@@ -1434,7 +1457,7 @@ export const CommandPalette: React.FC = () => {
                                             </div>
                                         ))}
                                         {Object.entries(selectedCommand.action.parameters).every(
-                                            ([name]) => paramValues[name] !== undefined && paramValues[name] !== null
+                                            ([name]: [string, any]) => paramValues[name] !== undefined && paramValues[name] !== null
                                         ) && (
                                             <Button
                                                 type="submit"
@@ -1503,7 +1526,7 @@ export const CommandPalette: React.FC = () => {
                                                 commands={commands}
                                                 onCommandSelect={handleSelectCommand}
                                                 selectedIndex={selectedIndex}
-                                                onHoverIndex={idx => {
+                                                onHoverIndex={(idx: number) => {
                                                     if (idx >= 0) setSelectedIndex(idx);
                                                 }}
                                             />

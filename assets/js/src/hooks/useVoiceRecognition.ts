@@ -1,5 +1,38 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+// Type declarations for Web Speech API
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+}
+
+interface SpeechRecognitionConstructor {
+  new(): SpeechRecognition;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognitionConstructor;
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
+  }
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: 'no-speech' | 'audio-capture' | 'not-allowed' | 'network' | 'service-not-allowed' | 'bad-grammar' | 'language-not-supported' | string;
+}
+
 interface VoiceRecognitionState {
   isListening: boolean;
   transcript: string;
@@ -37,6 +70,20 @@ export const useVoiceRecognition = (options: VoiceRecognitionOptions = {}) => {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
+  // Store callbacks in refs to avoid re-creating SpeechRecognition
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  const onStartRef = useRef(onStart);
+  const onEndRef = useRef(onEnd);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onResultRef.current = onResult;
+    onErrorRef.current = onError;
+    onStartRef.current = onStart;
+    onEndRef.current = onEnd;
+  }, [onResult, onError, onStart, onEnd]);
+
   // Check if speech recognition is supported
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -54,10 +101,10 @@ export const useVoiceRecognition = (options: VoiceRecognitionOptions = {}) => {
 
       recognition.onstart = () => {
         setState(prev => ({ ...prev, isListening: true, error: null }));
-        onStart?.();
+        onStartRef.current?.();
       };
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = '';
         let interimTranscript = '';
 
@@ -77,11 +124,11 @@ export const useVoiceRecognition = (options: VoiceRecognitionOptions = {}) => {
         }));
 
         if (finalTranscript) {
-          onResult?.(finalTranscript);
+          onResultRef.current?.(finalTranscript);
         }
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         let errorMessage = 'Voice recognition error';
 
         switch (event.error) {
@@ -115,15 +162,15 @@ export const useVoiceRecognition = (options: VoiceRecognitionOptions = {}) => {
           isListening: false,
           error: errorMessage
         }));
-        onError?.(errorMessage);
+        onErrorRef.current?.(errorMessage);
       };
 
       recognition.onend = () => {
         setState(prev => ({ ...prev, isListening: false }));
-        onEnd?.();
+        onEndRef.current?.();
       };
     }
-  }, [continuous, interimResults, lang, onResult, onError, onStart, onEnd]);
+  }, [continuous, interimResults, lang]);
 
   // Start listening
   const startListening = useCallback(() => {
