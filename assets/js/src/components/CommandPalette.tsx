@@ -12,6 +12,7 @@ import VisualizationEngine, { ChartType } from './VisualizationEngine';
 import WooCommerceReports from './WooCommerceReports';
 import { ClientSideAI } from '../utils/ClientSideAI';
 import { AIAbstraction } from '../utils/AIAbstraction';
+import { useVoiceCommands, getVoiceCommandHelp } from '../hooks/useVoiceRecognition';
 
 const REPORT_TYPES = [
   { label: 'Sales', value: 'sales' },
@@ -80,6 +81,22 @@ export const CommandPalette: React.FC = () => {
         return stored ? JSON.parse(stored) : { preferClientSide: true };
     });
     const [conversationHistory, setConversationHistory] = useState<any[]>([]);
+    const [voiceMode, setVoiceMode] = useState(false);
+    const {
+      isListening,
+      transcript,
+      isSupported: voiceSupported,
+      error: voiceError,
+      startListening,
+      stopListening,
+      clearTranscript,
+      reset: resetVoice,
+      isProcessing: voiceProcessing
+    } = useVoiceCommands((command) => {
+      setQuery(command);
+      handleSearch(command);
+      setVoiceMode(false);
+    });
 
     // Enhanced accessibility: Focus management
     const [focusableElements, setFocusableElements] = useState<HTMLElement[]>([]);
@@ -1226,7 +1243,7 @@ export const CommandPalette: React.FC = () => {
                         </div>
                     )}
                     <div className="aicp-search">
-                        <div className="aicp-input">
+                        <div className="aicp-input" style={{ position: 'relative' }}>
                             <TextControl
                                 ref={inputRef}
                                 value={query}
@@ -1236,17 +1253,62 @@ export const CommandPalette: React.FC = () => {
                                 aria-label={__('Search commands', 'ai-command-palette')}
                                 aria-describedby="search-help"
                             />
-                            <span className="aicp-search-icon-wrapper" style={{position: 'absolute', right: 16, top: '50%'}}>
-                                <span
-                                    className={classNames('aicp-search-icon dashicons', {
-                                        'dashicons-search': !(loading || aiLoading),
-                                        'dashicons-update': (loading || aiLoading),
-                                        'aicp-spin': (loading || aiLoading),
-                                    })}
-                                    aria-hidden="true"
-                                ></span>
-                            </span>
+                            {/* Voice input button */}
+                            <button
+                                type="button"
+                                className="aicp-voice-btn"
+                                aria-label={isListening ? __('Stop voice input', 'ai-command-palette') : __('Start voice input', 'ai-command-palette')}
+                                onClick={() => {
+                                    if (isListening) {
+                                        stopListening();
+                                    } else {
+                                        clearTranscript();
+                                        setVoiceMode(true);
+                                        startListening();
+                                    }
+                                }}
+                                disabled={!voiceSupported || voiceProcessing}
+                                style={{
+                                    position: 'absolute',
+                                    right: 48,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: voiceSupported ? 'pointer' : 'not-allowed',
+                                    fontSize: 20,
+                                    color: isListening ? '#2563eb' : '#888',
+                                    padding: 0
+                                }}
+                            >
+                                <span className={isListening ? 'dashicons dashicons-microphone' : 'dashicons dashicons-microphone'} />
+                            </button>
                         </div>
+                        {/* Voice transcript/status UI */}
+                        {voiceMode && (
+                          <div className="aicp-voice-status" style={{ marginTop: 8 }}>
+                            {isListening && <span>{__('Listening...', 'ai-command-palette')}</span>}
+                            {transcript && <span className="aicp-voice-transcript">{transcript}</span>}
+                            {voiceError && <span className="aicp-voice-error" style={{ color: '#dc2626' }}>{voiceError}</span>}
+                            <div style={{ marginTop: 4, display: 'flex', gap: 8 }}>
+                              <button type="button" onClick={stopListening} disabled={!isListening} className="aicp-voice-stop-btn">
+                                {__('Stop', 'ai-command-palette')}
+                              </button>
+                              <button type="button" onClick={clearTranscript} className="aicp-voice-clear-btn">
+                                {__('Clear', 'ai-command-palette')}
+                              </button>
+                              <button type="button" onClick={() => { setVoiceMode(false); stopListening(); }} className="aicp-voice-close-btn">
+                                {__('Close', 'ai-command-palette')}
+                              </button>
+                            </div>
+                            <div className="aicp-voice-help" style={{ marginTop: 4, fontSize: 12 }}>
+                              <details>
+                                <summary>{__('Voice command help', 'ai-command-palette')}</summary>
+                                <pre style={{ whiteSpace: 'pre-wrap' }}>{getVoiceCommandHelp()}</pre>
+                              </details>
+                            </div>
+                          </div>
+                        )}
                         <div id="search-help" className="sr-only">
                             {__('Type to search commands. Use arrow keys to navigate, Enter to execute, Escape to close.', 'ai-command-palette')}
                         </div>
