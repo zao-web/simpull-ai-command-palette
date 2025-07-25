@@ -40,14 +40,14 @@ const CommandList: React.FC<CommandListProps> = ({ commands, onCommandSelect, se
                             tabIndex={selected ? 0 : -1}
                         >
                             <span className={`dashicons ${command.icon || 'dashicons-admin-generic'}`}></span>
-                            <span className="aicp-command-title">{command.title}</span>
+                            <span className="aicp-command-title" dangerouslySetInnerHTML={{ __html: command.title }}></span>
                             <span className="aicp-command-category">{command.category}</span>
                         </li>
                     );
                 })}
             </ul>
             {/* Live region for screen readers announcing the selected command */}
-            <div aria-live="polite" aria-atomic="true" className="sr-only" id="aicp-commandlist-live">
+            <div aria-live="polite" aria-atomic="true" className="screen-reader-text" id="aicp-commandlist-live">
                 {commands[selectedIndex] && `${commands[selectedIndex].title}. ${commands[selectedIndex].description || ''}`}
             </div>
         </>

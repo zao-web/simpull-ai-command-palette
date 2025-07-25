@@ -158,7 +158,7 @@ export const WooCommerceReports: React.FC = () => {
           </div>
         )}
       </form>
-      <div id="report-help" className="sr-only">
+      <div id="report-help" className="screen-reader-text">
         {__('Select report type and date range to view data visualization', 'ai-command-palette')}
       </div>
       {loadingSales && (

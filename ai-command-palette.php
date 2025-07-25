@@ -199,12 +199,12 @@ class AI_Command_Palette {
                 if (!empty($item[0]) && !empty($item[2]) && current_user_can($item[1])) {
                     $commands[] = [
                         'id' => 'nav_' . sanitize_key($item[2]),
-                        'title' => wp_strip_all_tags($item[0]),
+                        'title' => $item[0],
                         'category' => 'navigation',
                         'icon' => $item[6] ?? 'dashicons-admin-generic',
                         'action' => [
                             'type' => 'navigate',
-                            'url' => menu_page_url($item[2], false)
+                            'url' => menu_page_url($item[2], false) !== '' ? menu_page_url($item[2], false) : admin_url($item[2])
                         ]
                     ];
                 }
@@ -220,8 +220,8 @@ class AI_Command_Palette {
                 'icon' => 'dashicons-edit',
                 'capability' => 'edit_posts',
                 'action' => [
-                    'type' => 'callback',
-                    'callback' => 'create_post'
+                    'type' => 'navigate',
+                    'url' => admin_url('post-new.php?post_type=post')
                 ]
             ],
             [
@@ -229,14 +229,22 @@ class AI_Command_Palette {
                 'title' => __('Create New Page', 'ai-command-palette'),
                 'category' => 'content',
                 'icon' => 'dashicons-admin-page',
-                'capability' => 'edit_pages'
+                'capability' => 'edit_pages',
+                'action' => [
+                    'type' => 'navigate',
+                    'url' => admin_url('post-new.php?post_type=page')
+                ]
             ],
             [
                 'id' => 'media_library',
                 'title' => __('Media Library', 'ai-command-palette'),
                 'category' => 'navigation',
                 'icon' => 'dashicons-admin-media',
-                'capability' => 'upload_files'
+                'capability' => 'upload_files',
+                'action' => [
+                    'type' => 'navigate',
+                    'url' => admin_url('upload.php')
+                ]
             ]
         ];
 

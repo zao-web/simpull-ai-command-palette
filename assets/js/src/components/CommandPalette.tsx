@@ -502,7 +502,7 @@ function CommandPalette() {
         const announcement = document.createElement('div');
         announcement.setAttribute('aria-live', 'polite');
         announcement.setAttribute('aria-atomic', 'true');
-        announcement.className = 'sr-only';
+        announcement.className = 'screen-reader-text';
         announcement.textContent = message;
         document.body.appendChild(announcement);
 
@@ -515,6 +515,8 @@ function CommandPalette() {
     const handleExecute = async (command: Command) => {
         setLoading(true);
         setError(null);
+
+        console.log('handleExecute', command);
 
         // Announce execution to screen reader
         announceToScreenReader(`Executing command: ${command.title}`);
@@ -661,10 +663,18 @@ function CommandPalette() {
 
     // Handle command selection
     const handleSelectCommand = (cmd: any) => {
-        setSelectedCommand(cmd);
-        setParamValues({});
-        setExecResult(null);
-        setExecError(null);
+        if (cmd.category === 'suggestion') {
+            setQuery(cmd.title);
+            handleSearch(cmd.title);
+            setSelectedCommand(null);
+        } else if (cmd.action?.type === 'dynamic_api' || cmd.action?.type === 'ai_execute') {
+            setSelectedCommand(cmd);
+            setParamValues({});
+            setExecResult(null);
+            setExecError(null);
+        } else {
+            handleExecute(cmd);
+        }
     };
 
     // Handle parameter input change
@@ -990,7 +1000,7 @@ function CommandPalette() {
                 >
                     {__('Confirm & Execute', 'ai-command-palette')}
                 </Button>
-                <div id="full-execute-help" className="sr-only">
+                <div id="full-execute-help" className="screen-reader-text">
                     {__('Press Enter or click to execute this command', 'ai-command-palette')}
                 </div>
             </form>
@@ -1219,7 +1229,7 @@ function CommandPalette() {
                             {contextualLoading ? (
                                 <div aria-live="polite">
                                     {React.createElement(Spinner as any)}
-                                    <span className="sr-only">{__('Loading suggestions', 'ai-command-palette')}</span>
+                                    <span className="screen-reader-text">{__('Loading suggestions', 'ai-command-palette')}</span>
                                 </div>
                             ) : (
                                 <div
@@ -1332,7 +1342,7 @@ function CommandPalette() {
                             </div>
                           </div>
                         )}
-                        <div id="search-help" className="sr-only">
+                        <div id="search-help" className="screen-reader-text">
                             {__('Type to search commands. Use arrow keys to navigate, Enter to execute, Escape to close.', 'ai-command-palette')}
                         </div>
                         {(loading || aiLoading || dynamicLoading) && (
@@ -1383,7 +1393,7 @@ function CommandPalette() {
                             {workflowRunning && (
                                 <div aria-live="polite">
                                     {React.createElement(Spinner as any)}
-                                    <span className="sr-only">{__('Workflow is running', 'ai-command-palette')}</span>
+                                    <span className="screen-reader-text">{__('Workflow is running', 'ai-command-palette')}</span>
                                 </div>
                             )}
                             {workflowError && (
@@ -1469,7 +1479,7 @@ function CommandPalette() {
                                                 {__('Confirm & Execute', 'ai-command-palette')}
                                             </Button>
                                         )}
-                                        <div id="execute-help" className="sr-only">
+                                        <div id="execute-help" className="screen-reader-text">
                                             {__('Press Enter or click to execute this command', 'ai-command-palette')}
                                         </div>
                                     </form>
@@ -1517,6 +1527,7 @@ function CommandPalette() {
                                                 overflow: 'hidden',
                                                 transition: 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
                                                 opacity: workflowPlan || (selectedCommand && selectedCommand.action?.type === 'ai_execute') ? 0 : 1,
+                                                paddingBottom: '5rem',
                                             }}
                                             role="region"
                                             aria-labelledby="palette-title"
@@ -1531,7 +1542,7 @@ function CommandPalette() {
                                                 }}
                                             />
                                             {/* Live region for error/status messages */}
-                                            <div aria-live="polite" aria-atomic="true" className="sr-only" id="aicp-palette-status">
+                                            <div aria-live="polite" aria-atomic="true" className="screen-reader-text" id="aicp-palette-status">
                                                 {error ? error : loading ? 'Loading...' : ''}
                                             </div>
                                         </div>
@@ -1607,7 +1618,7 @@ function CommandPalette() {
                                     >
                                         {__('Confirm & Execute', 'ai-command-palette')}
                                     </Button>
-                                    <div id="full-execute-help" className="sr-only">
+                                    <div id="full-execute-help" className="screen-reader-text">
                                         {__('Press Enter or click to execute this command', 'ai-command-palette')}
                                     </div>
                                 </form>
