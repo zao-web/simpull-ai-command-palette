@@ -89,6 +89,13 @@ This guide provides step-by-step testing procedures for the AI Command Palette p
 - ✅ Results are displayed appropriately
 - ✅ Error handling works for invalid requests
 
+
+**Current Actual Results**:
+
+   - ❌  "Show me all pages": Returns a query to get the top 100 pages - but it doesn't do anything with that query. I'd expect the workflow builder to understand the GET request and return the list of pages, or understand that I want to navigate to the Pages to view them all.
+   - ❌ "Deactivate the Akismet plugin": Doesn't understand it - understands the plugin intent, but does nothing.
+   - ❌ "What's the site title": No schema available for this function.
+
 ### Test 5: Chrome Built-in AI Testing (Chrome 138+)
 **Objective**: Test client-side AI features in supported browsers
 

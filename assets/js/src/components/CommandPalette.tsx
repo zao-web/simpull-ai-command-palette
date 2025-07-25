@@ -454,6 +454,7 @@ function CommandPalette() {
 
     // Enhanced keyboard navigation with focus trap
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const isInput = document.activeElement === inputRef.current;
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
@@ -466,10 +467,14 @@ function CommandPalette() {
                 setSelectedIndex((prev: number) => prev > 0 ? prev - 1 : 0);
                 break;
             case 'Enter':
-                e.preventDefault();
-                if (commands[selectedIndex]) {
-                    handleExecute(commands[selectedIndex]);
+                // Only trigger command execution if not focused on input, or if input is focused but not in a form
+                if (!isInput) {
+                    e.preventDefault();
+                    if (commands[selectedIndex]) {
+                        handleExecute(commands[selectedIndex]);
+                    }
                 }
+                // Otherwise, let the input handle Enter (e.g., for forms)
                 break;
             case 'Escape':
                 e.preventDefault();
