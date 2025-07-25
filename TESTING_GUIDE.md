@@ -11,6 +11,7 @@ This guide provides step-by-step testing procedures for the AI Command Palette p
 - Modern browser (Chrome 138+ for full client-side AI features)
 - AI API key (OpenAI or Anthropic) for server-side AI features
 - Test plugins: WooCommerce, Yoast SEO, Contact Form 7 (optional)
+- Additional REST API plugins: Easy Digital Downloads, WP Job Manager, Event Calendar Pro (optional - for REST API discovery testing)
 
 ### 2. Installation Steps
 1. Upload the plugin to `/wp-content/plugins/ai-command-palette/`
