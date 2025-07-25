@@ -14,6 +14,7 @@ export interface Command {
     description?: string;
     priority?: number;
     score?: number;
+    hidden?: boolean; // Optional: used to hide submenu commands from default list
 }
 
 export interface CommandResult {

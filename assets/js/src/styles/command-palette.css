@@ -606,7 +606,9 @@ span.aicp-search-icon.dashicons.dashicons-update.aicp-spin {
 
 .aicp-container .awaiting-mod,
 .aicp-container .awaiting-mod.count-0,
-.aicp-container .plugin-count {
+.aicp-container .plugin-count,
+.aicp-container .update-count,
+.aicp-container .theme-count {
   display: inline-block;
   vertical-align: top;
   box-sizing: border-box;

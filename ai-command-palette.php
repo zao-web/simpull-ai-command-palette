@@ -254,6 +254,36 @@ class AI_Command_Palette {
             }
         }
 
+        // Add submenu items as hidden navigation commands (searchable, but not shown by default)
+        if (is_admin() && !empty($submenu)) {
+            // Build a map of parent_slug => label for quick lookup
+            $parent_labels = [];
+            foreach ($menu as $item) {
+                if (!empty($item[2]) && !empty($item[0])) {
+                    $parent_labels[$item[2]] = wp_strip_all_tags($item[0]);
+                }
+            }
+            foreach ($submenu as $parent_slug => $items) {
+                $parent_label = isset($parent_labels[$parent_slug]) ? $parent_labels[$parent_slug] : ucfirst($parent_slug);
+                foreach ($items as $item) {
+                    // $item: [0] => label, [1] => capability, [2] => slug, [4] => icon (optional)
+                    if (!empty($item[0]) && !empty($item[2]) && current_user_can($item[1])) {
+                        $commands[] = [
+                            'id' => 'nav_' . sanitize_key($parent_slug . '_' . $item[2]),
+                            'title' => $item[0],
+                            'category' => $parent_label,
+                            'icon' => isset($item[4]) ? $item[4] : 'dashicons-admin-generic',
+                            'action' => [
+                                'type' => 'navigate',
+                                'url' => menu_page_url($item[2], false) !== '' ? menu_page_url($item[2], false) : admin_url($item[2])
+                            ],
+                            'hidden' => true // Mark as hidden for default display
+                        ];
+                    }
+                }
+            }
+        }
+
         return $commands;
     }
 

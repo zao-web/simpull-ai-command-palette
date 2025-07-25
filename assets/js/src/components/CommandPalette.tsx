@@ -1221,7 +1221,7 @@ function CommandPalette() {
                 >
                     {/* Recommended/Contextual Suggestions */}
                     {/* Only show 'Recommended for you' if there are actionable suggestions */}
-                    {contextualSuggestions.length > 0 && !query && !selectedCommand && contextualSuggestions.some((s: any) => getCommandById(s.id)) && (
+                    {contextualSuggestions.length > 0 && !query && !selectedCommand && contextualSuggestions.some((s: any) => { const cmd = getCommandById(s.id); return cmd && !cmd.hidden; }) && (
                         <div className="aicp-contextual-suggestions mb-4">
                             <div className="aicp-section-title font-semibold mb-1" id="suggestions-heading">
                                 {__('Recommended for you', 'ai-command-palette')}
@@ -1239,7 +1239,7 @@ function CommandPalette() {
                                 >
                                     {contextualSuggestions.map((suggestion: any, index: number) => {
                                         const cmd = getCommandById(suggestion.id);
-                                        if (!cmd) return null;
+                                        if (!cmd || cmd.hidden) return null;
                                         return (
                                             <button
                                                 key={cmd.id}
@@ -1534,7 +1534,7 @@ function CommandPalette() {
                                             aria-describedby="palette-description"
                                         >
                                             <CommandList
-                                                commands={commands}
+                                                commands={query || selectedCommand ? commands : commands.filter(cmd => !cmd.hidden)}
                                                 onCommandSelect={handleSelectCommand}
                                                 selectedIndex={selectedIndex}
                                                 onHoverIndex={(idx: number) => {
